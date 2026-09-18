@@ -29,7 +29,12 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="participants">
             <strong>Participants</strong>
             <ul>
-              ${details.participants.map((participant) => `<li>${participant}</li>`).join("")}
+              ${details.participants.map((participant) => `
+                <li>
+                  <span>${participant}</span>
+                  <button class="remove-participant" type="button" data-activity="${name}" data-email="${participant}" aria-label="Remove ${participant} from ${name}">&times;</button>
+                </li>
+              `).join("")}
             </ul>
           </div>
         `;
@@ -86,6 +91,34 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
+    }
+  });
+
+  activitiesList.addEventListener("click", async (event) => {
+    const removeButton = event.target.closest(".remove-participant");
+    if (!removeButton) {
+      return;
+    }
+
+    const activity = removeButton.dataset.activity;
+    const email = removeButton.dataset.email;
+
+    try {
+      const response = await fetch(
+        `/activities/${encodeURIComponent(activity)}/participants/${encodeURIComponent(email)}`,
+        { method: "DELETE" }
+      );
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.detail || "Unable to remove participant");
+      }
+
+      await fetchActivities();
+    } catch (error) {
+      messageDiv.textContent = error.message;
+      messageDiv.className = "error";
+      messageDiv.classList.remove("hidden");
     }
   });
 
